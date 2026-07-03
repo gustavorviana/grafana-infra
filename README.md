@@ -16,7 +16,9 @@ Stack Docker Compose de laboratorio/MVP para logs com Grafana, Loki e interface 
 ## Como subir
 
 ```sh
-cp .env.example .env  # configure TUNNEL_TOKEN se usar Cloudflared
+cp .env.example .env     # configure TUNNEL_TOKEN se usar Cloudflared
+chmod +x setup.sh
+sudo ./setup.sh          # cria as pastas de dados com permissoes corretas (necessario no Linux)
 docker compose up -d
 ```
 
