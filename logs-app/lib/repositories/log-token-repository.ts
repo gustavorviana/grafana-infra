@@ -18,6 +18,11 @@ export class LogTokenRepository {
     return db.select().from(logTokens).where(eq(logTokens.id, id)).get();
   }
 
+  // Look up a token by its raw value (used to authenticate the log API).
+  findByToken(token: string): LogToken | undefined {
+    return db.select().from(logTokens).where(eq(logTokens.token, token)).get();
+  }
+
   // Token is generated here (server) only on creation.
   add(data: Omit<LogToken, "id" | "token">): LogToken {
     const token: LogToken = { ...data, id: randomUUID(), token: genToken() };

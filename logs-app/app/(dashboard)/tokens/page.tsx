@@ -144,8 +144,8 @@ export default function TokensPage() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Descrição</TableHead>
             <TableHead>Aplicação</TableHead>
+            <TableHead>Descrição</TableHead>
             <TableHead>Token</TableHead>
             <TableHead className="w-44 text-right">Ações</TableHead>
           </TableRow>
@@ -163,8 +163,8 @@ export default function TokensPage() {
           ) : (
             tokens.map((t) => (
               <TableRow key={t.id}>
-                <TableCell className="font-medium">{t.description}</TableCell>
-                <TableCell>{appName(t.applicationId)}</TableCell>
+                <TableCell title={appName(t.applicationId)}>{appName(t.applicationId)}</TableCell>
+                <TableCell className="font-medium" title={t.description}>{t.description}</TableCell>
                 <TableCell>
                   <button
                     type="button"
