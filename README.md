@@ -1,47 +1,60 @@
 # Observability Lab
 
-Stack Docker Compose de laboratorio/MVP para logs com Grafana e Loki.
+Stack Docker Compose de laboratorio/MVP para logs com Grafana, Loki e interface de ingestao.
 
 > Esta configuracao e para laboratorio/MVP, nao para producao. Revise seguranca, retencao, autenticacao, limites, backups e exposicao de rede antes de usar em ambientes reais.
 
 ## Servicos
 
-- Grafana: interface para consultar logs no Explore em <http://localhost:3000>
-- Loki: armazenamento e consulta de logs, acessivel apenas pela rede Docker
-- Cloudflared: opcional, somente para expor o Grafana
+| Servico | URL | Descricao |
+|---|---|---|
+| Grafana | <http://localhost:3000> | Interface para consultar logs |
+| Logs App | <http://localhost:3002> | Plataforma de ingestao de logs |
+| Loki | interno (3100) | Armazenamento de logs, sem porta publica |
+| Cloudflared | — | Tunnel para expor o Grafana externamente |
 
 ## Como subir
 
 ```sh
+cp .env.example .env  # configure TUNNEL_TOKEN se usar Cloudflared
 docker compose up -d
 ```
 
-Depois acesse o Grafana:
+## Acessos padrao
 
-- URL: <http://localhost:3000>
-- Usuario: `admin`
-- Senha: `admin`
+| Servico | Usuario | Senha |
+|---|---|---|
+| Grafana | `admin` | `admin` |
+| Logs App | `admin` | `admin` |
 
-O datasource Loki e provisionado automaticamente.
+O datasource Loki e provisionado automaticamente no Grafana.
 
-## Consultar logs no Explore
+## Consultar logs no Grafana
 
-1. Abra <http://localhost:3000>.
-2. Entre com `admin` / `admin`.
-3. Va em Explore.
-4. Selecione o datasource `Loki`.
-5. Consulte logs com LogQL, por exemplo:
+1. Abra <http://localhost:3000>
+2. Va em **Explore**
+3. Selecione datasource `Loki`
+4. Consulte com LogQL:
 
 ```logql
 {container=~".+"}
 ```
 
-## Cloudflared opcional
+## Enviar logs via API
 
-Para criar um tunnel temporario expondo somente o Grafana:
+Veja [logs-app/README.md](logs-app/README.md) para documentacao completa da API de ingestao.
 
-```sh
-docker compose --profile tunnel up -d
+Exemplo rapido:
+
+```bash
+curl -X POST http://localhost:3002/api/log \
+  -H "Authorization: Bearer lgt_seu_token_aqui" \
+  -H "Content-Type: application/json" \
+  -d '[{"level":"INFO","logs":[{"content":"Hello from my service"}]}]'
 ```
 
-Nao exponha o Loki diretamente na internet. Nesta stack, ele fica sem porta publicada; apenas o Grafana e vinculado ao localhost.
+## Cloudflared
+
+Requer `TUNNEL_TOKEN` no `.env`. Sobe automaticamente com `docker compose up`.
+
+Nao exponha o Loki diretamente na internet — ele fica sem porta publica nesta stack.

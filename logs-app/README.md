@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Logs App
 
-## Getting Started
+Plataforma de ingestão de logs com interface web para gerenciamento de aplicações, tokens e usuários. Atua como proxy autenticado entre seus serviços e o Grafana Loki.
 
-First, run the development server:
+## Como funciona
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+Seu serviço → POST /api/log (token) → Logs App → Loki → Grafana
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+O app valida o token, identifica a aplicação e encaminha os logs ao Loki com os labels corretos.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Rodando com Docker
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+docker compose up logs-app
+```
 
-## Learn More
+Acesse em `http://localhost:3002`. Login padrão: `admin` / `admin`.
 
-To learn more about Next.js, take a look at the following resources:
+## Enviando logs
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 1. Crie uma aplicação e gere um token
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+No painel web: **Aplicações → Nova aplicação → Tokens → Gerar token**
 
-## Deploy on Vercel
+O token tem formato `lgt_<48 hex chars>`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 2. POST /api/log
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Headers:**
+```
+Authorization: Bearer lgt_seu_token_aqui
+Content-Type: application/json
+```
+
+**Body:**
+```json
+[
+  {
+    "level": "INFO",
+    "host": "meu-servidor",
+    "logs": [
+      {
+        "time": "2025-01-15T10:30:00Z",
+        "content": "Usuário autenticado com sucesso",
+        "metadata": {
+          "userId": "123",
+          "ip": "192.168.1.1"
+        }
+      }
+    ]
+  }
+]
+```
+
+**Campos:**
+
+| Campo | Tipo | Obrigatório | Descrição |
+|---|---|---|---|
+| `level` | `INFO` \| `WARNING` \| `ERROR` \| `CRITICAL` | Sim | Nível do log |
+| `host` | string | Não | Label de hostname no Loki |
+| `logs[].time` | ISO 8601 ou nanosegundos | Não | Timestamp (padrão: agora) |
+| `logs[].content` | string ou objeto | Sim | Conteúdo do log |
+| `logs[].metadata` | `Record<string, string>` | Não | Labels extras no Loki |
+
+**Exemplo com curl:**
+```bash
+curl -X POST http://localhost:3002/api/log \
+  -H "Authorization: Bearer lgt_seu_token_aqui" \
+  -H "Content-Type: application/json" \
+  -d '[{"level":"ERROR","logs":[{"content":"Falha na conexão com banco de dados"}]}]'
+```
+
+**Resposta:** repassa o status do Loki diretamente (`204 No Content` em caso de sucesso).
+
+## Variáveis de ambiente
+
+| Variável | Padrão | Descrição |
+|---|---|---|
+| `LOKI_URL` | `http://localhost:3100` | URL base do Loki |
+| `DATABASE_PATH` | `data/logs.db` | Caminho do banco SQLite |
+| `ADMIN_USERNAME` | `admin` | Usuário admin inicial |
+| `ADMIN_PASSWORD_HASH` | — | Hash bcrypt da senha admin |
