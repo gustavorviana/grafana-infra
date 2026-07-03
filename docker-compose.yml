@@ -45,9 +45,7 @@ services:
       - observability
 
   logs-app:
-    build:
-      context: ./logs-app
-      dockerfile: Dockerfile
+    image: logs-app
     container_name: observability-logs-app
     restart: unless-stopped
     ports:
