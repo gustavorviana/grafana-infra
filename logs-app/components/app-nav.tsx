@@ -13,6 +13,7 @@ const links = [
   { href: "/users", label: "Usuários" },
   { href: "/applications", label: "Aplicações" },
   { href: "/tokens", label: "Tokens de Log" },
+  { href: "/blocked-ips", label: "IPs Bloqueados" },
 ];
 
 export function AppNav() {

@@ -30,8 +30,16 @@ CREATE TABLE IF NOT EXISTS applications (
 CREATE TABLE IF NOT EXISTS log_tokens (
   id             TEXT PRIMARY KEY,
   description    TEXT NOT NULL DEFAULT '',
+  cliente        TEXT,
   application_id TEXT NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
   token          TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS login_attempts (
+  ip         TEXT PRIMARY KEY,
+  attempts   INTEGER NOT NULL DEFAULT 0,
+  blocked    INTEGER NOT NULL DEFAULT 0,
+  blocked_at INTEGER
 );
 `;
 
@@ -61,10 +69,10 @@ function init() {
     .prepare("SELECT count(*) AS c FROM users")
     .get() as { c: number };
   if (count.c === 0) {
-    // Bootstrap admin from env. ADMIN_PASSWORD_HASH must be a bcrypt hash;
-    // falls back to a hashed "admin" if unset. Change after first login.
+    // Bootstrap admin from env. ADMIN_PASSWORD is the plain-text password;
+    // falls back to "admin" if unset. Change after first login.
     const adminUser = process.env.ADMIN_USERNAME ?? "admin";
-    const adminHash = process.env.ADMIN_PASSWORD_HASH ?? hashPassword("admin");
+    const adminHash = hashPassword(process.env.ADMIN_PASSWORD ?? "admin");
     sqlite
       .prepare("INSERT INTO users (id, username, password) VALUES (?, ?, ?)")
       .run(randomUUID(), adminUser, adminHash);

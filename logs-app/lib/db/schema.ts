@@ -1,5 +1,12 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+export const loginAttempts = sqliteTable("login_attempts", {
+  ip: text("ip").primaryKey(),
+  attempts: integer("attempts").notNull().default(0),
+  blocked: integer("blocked", { mode: "boolean" }).notNull().default(false),
+  blockedAt: integer("blocked_at"),
+});
+
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -19,6 +26,7 @@ export const applications = sqliteTable("applications", {
 export const logTokens = sqliteTable("log_tokens", {
   id: text("id").primaryKey(),
   description: text("description").notNull().default(""),
+  cliente: text("cliente"),
   applicationId: text("application_id")
     .notNull()
     .references(() => applications.id, { onDelete: "cascade" }),

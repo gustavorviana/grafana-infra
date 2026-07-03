@@ -41,9 +41,3 @@ export function toNanos(time: string): string | null {
 export function isValidTime(time: string): boolean {
   return toNanos(time) !== null;
 }
-
-// ISO-8601 string for a given epoch-nanoseconds value (ms precision).
-export function nsToIso(ns: string): string {
-  const ms = BigInt(ns) / NS_PER_MS;
-  return new Date(Number(ms)).toISOString();
-}

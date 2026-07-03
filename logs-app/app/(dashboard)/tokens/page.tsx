@@ -59,6 +59,7 @@ export default function TokensPage() {
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<LogToken | null>(null);
   const [description, setDescription] = React.useState("");
+  const [cliente, setCliente] = React.useState("");
   const [applicationId, setApplicationId] = React.useState("");
 
   // shows the full token value (after create / reset / view)
@@ -74,6 +75,7 @@ export default function TokensPage() {
   function openCreate() {
     setEditing(null);
     setDescription("");
+    setCliente("");
     setApplicationId(apps[0]?.id ?? "");
     setOpen(true);
   }
@@ -81,6 +83,7 @@ export default function TokensPage() {
   function openEdit(t: LogToken) {
     setEditing(t);
     setDescription(t.description);
+    setCliente(t.cliente ?? "");
     setApplicationId(t.applicationId);
     setOpen(true);
   }
@@ -88,13 +91,15 @@ export default function TokensPage() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!applicationId) return;
+    const clienteVal = cliente.trim() || null;
     startTransition(async () => {
       if (editing) {
-        setTokens(await updateToken(editing.id, { description, applicationId }));
+        setTokens(await updateToken(editing.id, { description, cliente: clienteVal, applicationId }));
         setOpen(false);
       } else {
         const { created, tokens: next } = await createToken({
           description,
+          cliente: clienteVal,
           applicationId,
         });
         setTokens(next);
@@ -146,6 +151,7 @@ export default function TokensPage() {
           <TableRow>
             <TableHead>Aplicação</TableHead>
             <TableHead>Descrição</TableHead>
+            <TableHead>Cliente</TableHead>
             <TableHead>Token</TableHead>
             <TableHead className="w-44 text-right">Ações</TableHead>
           </TableRow>
@@ -154,7 +160,7 @@ export default function TokensPage() {
           {tokens.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={4}
+                colSpan={5}
                 className="text-muted-foreground text-center"
               >
                 Nenhum token cadastrado.
@@ -165,6 +171,7 @@ export default function TokensPage() {
               <TableRow key={t.id}>
                 <TableCell title={appName(t.applicationId)}>{appName(t.applicationId)}</TableCell>
                 <TableCell className="font-medium" title={t.description}>{t.description}</TableCell>
+                <TableCell className="text-muted-foreground text-sm">{t.cliente ?? "—"}</TableCell>
                 <TableCell>
                   <button
                     type="button"
@@ -241,6 +248,15 @@ export default function TokensPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="cliente">Cliente <span className="text-muted-foreground">(opcional)</span></Label>
+              <Input
+                id="cliente"
+                value={cliente}
+                onChange={(e) => setCliente(e.target.value)}
+                placeholder="Nome do cliente"
               />
             </div>
             <div className="grid gap-2">

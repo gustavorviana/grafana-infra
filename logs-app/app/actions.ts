@@ -1,6 +1,9 @@
 "use server";
 
+import { headers } from "next/headers";
+
 import { applicationRepository } from "@/lib/repositories/application-repository";
+import { loginAttemptRepository } from "@/lib/repositories/login-attempt-repository";
 import { logTokenRepository } from "@/lib/repositories/log-token-repository";
 import {
   UsernameTakenError,
@@ -8,7 +11,7 @@ import {
 } from "@/lib/repositories/user-repository";
 import { validatePassword } from "@/lib/password";
 import * as session from "@/lib/session";
-import type { Application, LogToken, PublicUser, User } from "@/lib/types";
+import type { Application, LoginAttempt, LogToken, PublicUser, User } from "@/lib/types";
 
 // Result shape for user mutations that can fail validation.
 export type UsersResult = { users: PublicUser[]; error: string | null };
@@ -17,8 +20,25 @@ export type UsersResult = { users: PublicUser[]; error: string | null };
 export async function login(
   username: string,
   password: string
-): Promise<{ ok: boolean }> {
-  return { ok: await session.login(username, password) };
+): Promise<{ ok: boolean; blocked?: boolean }> {
+  const hdrs = await headers();
+  const ip =
+    hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    hdrs.get("x-real-ip") ??
+    "unknown";
+
+  if (loginAttemptRepository.isBlocked(ip)) {
+    return { ok: false, blocked: true };
+  }
+
+  const ok = await session.login(username, password);
+  if (ok) {
+    loginAttemptRepository.resetAttempts(ip);
+    return { ok: true };
+  }
+
+  loginAttemptRepository.recordFailure(ip);
+  return { ok: false };
 }
 export async function logout(): Promise<void> {
   await session.logout();
@@ -117,4 +137,14 @@ export async function resetToken(
 export async function deleteToken(id: string): Promise<LogToken[]> {
   logTokenRepository.remove(id);
   return logTokenRepository.list();
+}
+
+// --- Blocked IPs ---
+export async function listBlockedIps(): Promise<LoginAttempt[]> {
+  return loginAttemptRepository.listBlocked();
+}
+
+export async function unblockIp(ip: string): Promise<LoginAttempt[]> {
+  loginAttemptRepository.unblock(ip);
+  return loginAttemptRepository.listBlocked();
 }

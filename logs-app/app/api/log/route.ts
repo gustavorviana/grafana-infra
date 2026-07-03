@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Wrap the payload into the Loki push format and forward it.
-  const output = toLokiPush(parsed.data, application.tag);
+  const output = toLokiPush(parsed.data, application.tag, logToken.cliente);
 
   let lokiRes: Response;
   try {

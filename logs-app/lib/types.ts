@@ -14,9 +14,17 @@ export type Application = {
   tag: string;
 };
 
+export type LoginAttempt = {
+  ip: string;
+  attempts: number;
+  blocked: boolean;
+  blockedAt: number | null;
+};
+
 export type LogToken = {
   id: string;
   description: string;
+  cliente?: string | null;
   applicationId: string;
   token: string;
 };

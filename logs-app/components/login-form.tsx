@@ -30,10 +30,14 @@ export function LoginForm({
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const { ok } = await login(username, password);
+      const { ok, blocked } = await login(username, password);
       if (ok) {
         router.replace("/applications");
         router.refresh();
+      } else if (blocked) {
+        setError(
+          "Seu IP foi bloqueado por excesso de tentativas. Contate o administrador."
+        );
       } else {
         setError("Usuário ou senha inválidos.");
       }
