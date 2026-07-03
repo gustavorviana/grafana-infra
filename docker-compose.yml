@@ -1,22 +1,20 @@
 services:
-  grafana:
+  grafana: #Porta de acesso :3000
     image: grafana/grafana:latest
     container_name: observability-grafana
     restart: unless-stopped
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
-    ports:
-      - "127.0.0.1:3000:3000"
     volumes:
-      - grafana-data:/var/lib/grafana
+      - ./grafana/data:/var/lib/grafana
       - ./grafana/provisioning/datasources/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
     depends_on:
       - loki
     networks:
       - observability
 
-  loki:
+  loki: #Porta de acesso :3100
     image: grafana/loki:latest
     container_name: observability-loki
     restart: unless-stopped
@@ -24,7 +22,7 @@ services:
     ports:
       - "127.0.0.1:3100:3100"
     volumes:
-      - loki-data:/loki
+      - ./loki/data:/loki
       - ./loki/loki.yml:/etc/loki/loki.yml:ro
     networks:
       - observability
@@ -32,8 +30,6 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: observability-cloudflared
-    profiles:
-      - tunnel
     restart: unless-stopped
     environment:
       TUNNEL_TOKEN: ${TUNNEL_TOKEN}
@@ -43,10 +39,26 @@ services:
     networks:
       - observability
 
+  logs-app:
+    build:
+      context: ./logs-app
+      dockerfile: Dockerfile
+    container_name: observability-logs-app
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      LOKI_URL: http://observability-loki:3100
+    env_file:
+      - ./logs-app/.env
+    volumes:
+      - ./logs-app/data:/app/data
+    depends_on:
+      - loki
+    networks:
+      - observability
+
 networks:
   observability:
     driver: bridge
 
-volumes:
-  grafana-data:
-  loki-data:
