@@ -22,7 +22,12 @@ export function toLokiPush(data: LogRequest, tag: string, cliente?: string | nul
       // Validation guarantees a parseable time; fall back to now if absent.
       const ts = (log.time && toNanos(log.time)) || nowNs();
       const line = toLine(log.content);
-      return [ts, line, log.metadata as Record<string, string>];
+      const logStream = [ts, line] as LokiValue;
+
+      if (log.metadata)
+        logStream[2] = log.metadata;
+
+      return logStream;
     });
 
     return { stream: labels, values };
