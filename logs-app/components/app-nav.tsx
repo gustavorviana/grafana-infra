@@ -14,6 +14,7 @@ const links = [
   { href: "/applications", label: "Aplicações" },
   { href: "/tokens", label: "Tokens de Log" },
   { href: "/blocked-ips", label: "IPs Bloqueados" },
+  { href: "/docs", label: "Documentação" },
 ];
 
 export function AppNav() {
