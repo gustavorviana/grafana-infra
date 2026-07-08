@@ -1,3 +1,4 @@
 .env
 grafana/data/*
+grafana/config/*
 loki/data/*
